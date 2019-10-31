@@ -4,36 +4,21 @@ using UnityEngine;
 
 public class EnemyEventHandler : MonoBehaviour
 {
-    [SerializeField][Tooltip("Maximum health ")]
-    int maxHp = 100;
+    [Header("Settings")][Space]
+    [SerializeField][Tooltip("Maximum health ")] private int maxHp = 100;
+    [SerializeField][Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
+    [SerializeField][Tooltip("Movement speed multipler")] private float movementSpeed = 3;
+    [SerializeField][Range(0,3)][Tooltip("Airborne speed multiplier")] private float inAirSpeedMultipler = 2;
+    [SerializeField][Range(0, 1)][Tooltip("Chance to dash instead of a shot")] private float dashChance = 0.25f;
+    [SerializeField][Tooltip("The distance in which enemies will begin to attack")] private float triggerDistance = 16;
 
-    public GameObject hpBar;
+    [Space][Header("Game Objects")][Space]
+    [SerializeField] [Tooltip("Health indicator sprite")] private GameObject hpBar;
+    [SerializeField][Tooltip("Bullet GameObject")] private GameObject bulletPrefab;
+    [SerializeField][Tooltip("The object on whose position the bullets will be created")] private Transform bulletSpawnPos;
+    [SerializeField][Tooltip("The object around which the weapon will rotate")] private GameObject weaponPivot;
 
-    [SerializeField][Tooltip("Bullet velocity multipler")]
-    float bulletSpeed = 5;
-
-    [SerializeField][Tooltip("Movement speed multipler")]
-    float movementSpeed = 3;
-
-    [SerializeField][Range(0,3)][Tooltip("Airborne speed multiplier")]
-    float inAirSpeedMultipler = 2;
-
-    [SerializeField][Range(0, 1)][Tooltip("Chance to dash instead of a shot")]
-    float dashChance = 0.25f;
-
-    [SerializeField][Tooltip("Bullet GameObject")]
-    GameObject bulletPrefab;
-
-    [SerializeField][Tooltip("The object on whose position the bullets will be created")]
-    Transform bulletSpawnPos;
-
-    [SerializeField][Tooltip("The object around which the weapon will rotate")]
-    GameObject weaponPivot;
-
-    [SerializeField][Tooltip("The distance in which enemies will begin to attack")]
-    float triggerDistance = 16;
-
-    private SFXObjects sfx;
+    private EffectHandler effectHandler;
     private PlayerController controller;
     private Vector3 hpBarScale;
     private GameObject player;
@@ -48,9 +33,9 @@ public class EnemyEventHandler : MonoBehaviour
     {
         currentHp = maxHp;
         hpBarScale = hpBar.transform.localScale;
-        player = SFXObjects.Instance.player;
+        player = EffectHandler.Instance.player;
         mRigidbody2D = GetComponent<Rigidbody2D>();
-        sfx = SFXObjects.Instance;
+        effectHandler = EffectHandler.Instance;
         controller = PlayerController.Instance;
     }
 
@@ -115,22 +100,18 @@ public class EnemyEventHandler : MonoBehaviour
     {
         currentHp -= dmg;
         if (currentHp <= 0)
-        {
-            Destroy(gameObject);
-            controller.AddPoints(10);
-            controller.AddCoins(Random.Range(2, 5));
-            sfx.InstantiateParticle(transform.position, ParticleType.Death);
-            
-            // Spawn coins
-            //int i = Random.Range(2, 5);
-            //while (i > 0)
-            //{
-            //    sfx.InstantiateCoin(transform.position + (Vector3.one * Random.value));
-            //    i--;
-            //}
-        }
+            Death();
 
         hpBar.transform.localScale = new Vector3(hpBarScale.x * ((float)currentHp / (float)maxHp), hpBarScale.y, hpBarScale.z);
+    }
+
+    private void Death()
+    {
+        Destroy(gameObject);
+        controller.AddPoints(10);
+        controller.AddCoins(Random.Range(2, 5));
+        effectHandler.InstantiateParticle(transform.position, ParticleType.EnemyDeath, destroyTime:5);
+        effectHandler.PlaySound(transform.position, SoundType.EnemyDeath);
     }
 
     private void Shoot()
@@ -140,7 +121,7 @@ public class EnemyEventHandler : MonoBehaviour
             GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
             bullet.transform.rotation = weaponPivot.transform.rotation;
             bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * bulletSpeed, ForceMode2D.Impulse);
-            sfx.PlaySound(transform.position, SoundType.Shoot);
+            effectHandler.PlaySound(transform.position, SoundType.Shoot);
         }
         else
         {

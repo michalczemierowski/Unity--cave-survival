@@ -8,6 +8,7 @@ TagManager:
   - Enemy
   - Scene
   - Coin
+  - EnemyWeapon
   layers:
   - Default
   - TransparentFX

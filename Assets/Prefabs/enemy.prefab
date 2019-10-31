@@ -48,13 +48,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxHp: 100
-  hpBar: {fileID: 2954508613548497567}
   bulletSpeed: 4
+  movementSpeed: 3
+  inAirSpeedMultipler: 2
+  dashChance: 0.25
+  triggerDistance: 16
+  hpBar: {fileID: 2954508613548497567}
   bulletPrefab: {fileID: 1446030798920411577, guid: b33626310e4b3004ba50dd2624760aff,
     type: 3}
   bulletSpawnPos: {fileID: 7342406578542278680}
   weaponPivot: {fileID: 8960249743540451540}
-  triggerDistance: 16
 --- !u!50 &1916632602607823206
 Rigidbody2D:
   serializedVersion: 4
@@ -198,7 +201,7 @@ GameObject:
   - component: {fileID: 7342406578542278680}
   m_Layer: 0
   m_Name: shootPos
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -229,7 +232,7 @@ GameObject:
   - component: {fileID: 7248746542344486131}
   m_Layer: 0
   m_Name: playerSprite
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -312,7 +315,7 @@ GameObject:
   - component: {fileID: 8807933507523617840}
   m_Layer: 2
   m_Name: weapon
-  m_TagString: Enemy
+  m_TagString: EnemyWeapon
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -421,7 +424,7 @@ GameObject:
   - component: {fileID: 4034669700581919647}
   m_Layer: 0
   m_Name: weaponPivot
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

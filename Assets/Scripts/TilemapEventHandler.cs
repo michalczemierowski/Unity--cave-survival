@@ -15,7 +15,7 @@ public class TilemapEventHandler : MonoBehaviour
     {
         tilemap = GetComponent<Tilemap>();
         tileManager = TilemapManager.Instance;
-        player = SFXObjects.Instance.player;
+        player = EffectHandler.Instance.player;
     }
 
     private Vector3Int CalculatePosition(Vector3 position)

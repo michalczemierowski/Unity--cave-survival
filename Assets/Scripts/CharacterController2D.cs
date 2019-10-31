@@ -20,6 +20,7 @@ public class CharacterController2D : MonoBehaviour
 	const float k_CeilingRadius = .2f; // Radius of the overlap circle to determine if the player can stand up
 	private Rigidbody2D m_Rigidbody2D;
 	private Vector3 m_Velocity = Vector3.zero;
+    private PlayerController controller;
 
     private int jumps;
 
@@ -34,12 +35,13 @@ public class CharacterController2D : MonoBehaviour
 
 	public BoolEvent OnCrouchEvent;
 	private bool m_wasCrouching = false;
-    private SFXObjects sfx;
+    private EffectHandler sfx;
     private Animator animator;
 
 	private void Awake()
 	{
 		m_Rigidbody2D = GetComponent<Rigidbody2D>();
+        controller = GetComponent<PlayerController>();
 
 		if (OnLandEvent == null)
 			OnLandEvent = new UnityEvent();
@@ -53,7 +55,7 @@ public class CharacterController2D : MonoBehaviour
 
     private void Start()
     {
-        sfx = SFXObjects.Instance;
+        sfx = EffectHandler.Instance;
         animator = GetComponent<Animator>();
     }
 
@@ -76,7 +78,7 @@ public class CharacterController2D : MonoBehaviour
         if (m_Grounded && !wasGrounded)
         {
             OnLandEvent.Invoke();
-            jumps = 2;
+            controller.ResetJumps();
         }
     }
 
@@ -86,7 +88,7 @@ public class CharacterController2D : MonoBehaviour
     }
 
 
-	public void Move(float move, bool crouch, bool jump)
+    public void Move(float move, bool crouch, bool jump)
 	{
 		// If crouching, check to see if the character can stand up
 		if (!crouch)
@@ -143,6 +145,7 @@ public class CharacterController2D : MonoBehaviour
             jumpParticle.Play();
             OnJumpEvent.Invoke();
             sfx.PlaySound(transform.position, SoundType.Jump);
+            controller.setJumps(jumps);
 
             m_Rigidbody2D.velocity *= Vector2.right;
             m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));

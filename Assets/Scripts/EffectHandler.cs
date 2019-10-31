@@ -1,17 +1,15 @@
 ﻿using System.Collections;
 using UnityEngine;
 
-public class SFXObjects : MonoBehaviour
+public class EffectHandler : MonoBehaviour
 {
-    public static SFXObjects Instance;
+    public static EffectHandler Instance;
 
     public AudioSource[] SFX;
     public GameObject[] VFX;
 
     [Space]
     public GameObject Coin;
-
-    [SerializeField]
     public GameObject player;
 
     void Awake()
@@ -26,7 +24,7 @@ public class SFXObjects : MonoBehaviour
         SFX[intType].Play();
     }
 
-    public void InstantiateParticleWithRotation(Vector3 position, ParticleType type)
+    public void InstantiateParticleWithRotation(Vector3 position, ParticleType type, float destroyTime = 5f)
     {
         int intType = (int)type;
         GameObject particle = Instantiate(VFX[intType], position, Quaternion.identity);
@@ -42,7 +40,7 @@ public class SFXObjects : MonoBehaviour
         StartCoroutine(destroyParticleTimer(particle, 5));
     }
 
-    public void InstantiateParticle(Vector3 position, ParticleType type, Transform parent = null)
+    public void InstantiateParticle(Vector3 position, ParticleType type, Transform parent = null, float destroyTime = 1f)
     {
         int intType = (int)type;
         GameObject particle = parent == null ? Instantiate(VFX[intType], position, Quaternion.identity) : Instantiate(VFX[intType], position, Quaternion.identity, parent);
@@ -50,7 +48,7 @@ public class SFXObjects : MonoBehaviour
         particle.transform.position = particle.transform.position;
         particle.GetComponent<ParticleSystem>().Play();
 
-        StartCoroutine(destroyParticleTimer(particle, 5));
+        StartCoroutine(destroyParticleTimer(particle, destroyTime));
     }
 
     public void InstantiateCoin(Vector3 position)
@@ -71,7 +69,10 @@ public enum SoundType
     Hurt = 1,
     Jump = 2,
     Shoot = 3,
-    Coin = 4
+    Coin = 4,
+    Stun = 5,
+    LvlUp = 6,
+    EnemyDeath = 7
 }
 
 public enum ParticleType
@@ -80,7 +81,8 @@ public enum ParticleType
     EnemyBlood = 1,
     WallPlayer = 2,
     WallEnemy = 3,
-    Death = 4,
+    EnemyDeath = 4,
     Coin = 5,
-    LvlUp = 6
+    LvlUp = 6,
+    Stun = 7
 }

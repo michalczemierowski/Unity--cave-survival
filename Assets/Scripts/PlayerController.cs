@@ -8,41 +8,32 @@ public class PlayerController : MonoBehaviour
 {
     public static PlayerController Instance;
 
-    [Header("Settings")]
-    [Space]
-    [SerializeField][Tooltip("Movement speed multipler")]
-    float movementSpeedMultipler = 2f;
-    [SerializeField][Tooltip("Bullet velocity multipler")]
-    float bulletSpeed = 5;
-    [SerializeField][Tooltip("Time between shots")]
-    float timeBetweenShoots = 0.3f;
-    [Header("Game Objects")]
-    [Space]
-    [SerializeField][Tooltip("Bullet GameObject")]
-    GameObject bulletPrefab;
-    [SerializeField][Tooltip("The object on whose position the bullets will be created")]
-    Transform bulletSpawnPos;
-    [SerializeField][Tooltip("The object around which the weapon will rotate")]
-    GameObject weaponPivot;
+    [Header("Settings")][Space]
+    [SerializeField][Tooltip("Movement speed multipler")] private float movementSpeedMultipler = 2f;
+    [SerializeField][Tooltip("Number of jumps")] private int maxJumps = 2;
+    [SerializeField][Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
+    [SerializeField][Tooltip("Time between shots")] private float timeBetweenShoots = 0.3f;
+    [SerializeField][Tooltip("Duration of the stunning effect")] private float stunDuration = 1.3f;
+    [SerializeField][Tooltip("Can a player shoot when he's stunned")] private bool canShootWhileStunned;
+    [SerializeField][Tooltip("Duration of the dash")] private float dashDuration = 2f;
+    [SerializeField][Tooltip("The price of using the dash")] private int dashCost = 15;
 
-    [Space]
-    [Header("UI")]
-    [Space]
-    [SerializeField][Tooltip("Reload progress image with type \"Filled\"")]
-    Image reloadProgress;
-    [SerializeField][Tooltip("Healthbar image with type \"Filled\"")]
-    Image healthBar;
-    [SerializeField][Tooltip("Cursor image")]
-    GameObject crosshair;
-    [SerializeField][Tooltip("Text in which the number of points will be displayed")]
-    Image pointsBar;
-    [SerializeField][Tooltip("Text in which the number of coins will be displayed")]
-    Text coinsText;
+    [Space][Header("Game Objects")][Space]
+    [SerializeField][Tooltip("Bullet GameObject")] private GameObject bulletPrefab;
+    [SerializeField][Tooltip("The object on whose position the bullets will be created")] private Transform bulletSpawnPos;
+    [SerializeField][Tooltip("The object around which the weapon will rotate")] private GameObject weaponPivot;
 
-    CharacterController2D controller;
-    SFXObjects sfx;
-    TilemapManager tileManager;
+    [Space][Header("UI")][Space]
+    [SerializeField][Tooltip("Reload progress image with type \"Filled\"")] private Image reloadProgress;
+    [SerializeField][Tooltip("Healthbar image with type \"Filled\"")] private Image healthBar;
+    [SerializeField][Tooltip("Remaining jumps image with type \"Filled\"")] private Image jumpsLeftBar;
+    [SerializeField][Tooltip("Cursor image")] private GameObject crosshair;
+    [SerializeField][Tooltip("Text in which the number of points will be displayed")] private Image pointsBar;
+    [SerializeField][Tooltip("Text in which the number of coins will be displayed")] private Text coinsText;
 
+    private CharacterController2D controller;
+    private EffectHandler effectHandler;
+    private TilemapManager tileManager;
 
     private float movementForce;
     private float gravityScale;
@@ -50,6 +41,7 @@ public class PlayerController : MonoBehaviour
     private bool jump;
 
     protected bool canShoot;
+    protected bool shootingBlockade;
     protected float timeLeft;
 
     protected float Health = 1f;
@@ -63,8 +55,6 @@ public class PlayerController : MonoBehaviour
     private Camera cam;
     private Vector3 lookPos;
 
-    private Vector3[] localScale = new Vector3[] { Vector3.one, new Vector3(-1, 1, 1) };
-
     private void Awake()
     {
         Instance = this;
@@ -75,7 +65,7 @@ public class PlayerController : MonoBehaviour
         mRigidbody2D = GetComponent<Rigidbody2D>();
         controller = GetComponent<CharacterController2D>();
         cam = Camera.main;
-        sfx = SFXObjects.Instance;
+        effectHandler = EffectHandler.Instance;
         tileManager = TilemapManager.Instance;
         timeLeft = timeBetweenShoots;
 
@@ -99,7 +89,7 @@ public class PlayerController : MonoBehaviour
             Destroy(collider.gameObject);
         }
         */
-        if (collision.tag == "Enemy")
+        if (collision.tag == "EnemyWeapon")
         {
             if (isInvulnerable)
             {
@@ -110,12 +100,14 @@ public class PlayerController : MonoBehaviour
             {
                 //When enemy hits player
                 if (isControllable)
-                    Damage(10);
+                {
+                    Stun();
+                }
                 var velocity = transform.up * 5;
                 collision.GetComponentInParent<Rigidbody2D>().AddForce(-velocity, ForceMode2D.Impulse);
                 mRigidbody2D.AddForce(velocity, ForceMode2D.Impulse);
-                StartCoroutine(DisableControls(1));
-                controller.setJumps(2);
+                StartCoroutine(DisableControls(stunDuration, canShootWhileStunned));
+                controller.setJumps(maxJumps);
             }
         }
     }
@@ -148,7 +140,7 @@ public class PlayerController : MonoBehaviour
         {
             Shoot();
         }
-        if (!canShoot)
+        if (!canShoot && !shootingBlockade)
         {
             timeLeft -= Time.deltaTime;
             reloadProgress.fillAmount = timeLeft / timeBetweenShoots;
@@ -175,7 +167,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F))
         {
             if (tileManager.GetTilemap(0).RemoveTile(lookPos))
-                sfx.InstantiateCoin(new Vector3(lookPos.x, lookPos.y, 0) + transform.position);
+                effectHandler.InstantiateCoin(new Vector3(lookPos.x, lookPos.y, 0) + transform.position);
         }
     }
 
@@ -186,7 +178,8 @@ public class PlayerController : MonoBehaviour
         Health -= (float)value / 100f;
         if(Health <= 0)
         {
-            //TODO
+            // TODO: DEATH
+            Health = 0;
         }
         healthBar.fillAmount = Health;
     }
@@ -194,11 +187,6 @@ public class PlayerController : MonoBehaviour
     private void Aim()
     {
         lookPos = cam.ScreenToWorldPoint(Input.mousePosition);
-
-        if (lookPos.x > transform.position.x)
-            weaponPivot.transform.localScale = localScale[0];
-        else
-            weaponPivot.transform.localScale = localScale[1];
 
         lookPos = lookPos - transform.position;
         float angle = Mathf.Atan2(lookPos.y, lookPos.x) * Mathf.Rad2Deg;
@@ -211,31 +199,59 @@ public class PlayerController : MonoBehaviour
         GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPos.position, Quaternion.identity);
         bullet.transform.rotation = weaponPivot.transform.rotation;
         bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * bulletSpeed, ForceMode2D.Impulse);
-        sfx.PlaySound(transform.position, SoundType.Shoot);
+        effectHandler.PlaySound(transform.position, SoundType.Shoot);
         canShoot = false;
     }
 
     private void Dash()
     {
-        StartCoroutine(IEDash());
-        mRigidbody2D.AddForce(weaponPivot.transform.right * 20, ForceMode2D.Impulse);
+        if (Coins >= dashCost)
+        {
+            AddCoins(-dashCost);
+            StartCoroutine(IEDash(dashDuration));
+            mRigidbody2D.AddForce(weaponPivot.transform.right * 20, ForceMode2D.Impulse);
+        }
     }
 
-    private IEnumerator IEDash()
+    private void Stun()
+    {
+        Damage(10);
+        effectHandler.InstantiateParticle(transform.position, ParticleType.Stun, transform, stunDuration);
+        effectHandler.PlaySound(transform.position, SoundType.Stun);
+    }
+
+    private void LvlUP()
+    {
+        Heal(100);
+        effectHandler.InstantiateParticle(transform.position, ParticleType.LvlUp, transform);
+        effectHandler.PlaySound(transform.position, SoundType.LvlUp);
+        foreach(GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy"))
+        {
+            if(Vector2.Distance(enemy.transform.position, transform.position) < 10)
+            {
+                var enemyEvent = enemy.GetComponent<EnemyEventHandler>();
+                enemyEvent.Damage(100);
+            }
+        }
+    }
+
+    private IEnumerator IEDash(float time)
     {
         isDashing = true;
         mRigidbody2D.gravityScale = 0;
         isInvulnerable = true;
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(time);
         isInvulnerable = false;
         mRigidbody2D.gravityScale = gravityScale;
         isDashing = false;
-        controller.setJumps(2);
+        controller.setJumps(maxJumps);
     }
-    private IEnumerator DisableControls(float time)
+    private IEnumerator DisableControls(float time, bool canShootWhileStunned = false)
     {
         isControllable = false;
+        if (!canShootWhileStunned) shootingBlockade = true;
         yield return new WaitForSeconds(time);
+        if (!canShootWhileStunned) shootingBlockade = false;
         isControllable = true;
     }
     #endregion
@@ -245,6 +261,7 @@ public class PlayerController : MonoBehaviour
     {
         Health += (float)value / 100f;
         if (Health > 1f) Health = 1f;
+        healthBar.fillAmount = Health;
     }
 
     public void AddPoints(int value)
@@ -253,9 +270,7 @@ public class PlayerController : MonoBehaviour
         if (Points >= 1)
         {
             Points = 0;
-            Health = 1;
-            healthBar.fillAmount = Health;
-            sfx.InstantiateParticle(transform.position, ParticleType.LvlUp, transform);
+            LvlUP();
         }
         pointsBar.fillAmount = Points;
     }
@@ -264,6 +279,17 @@ public class PlayerController : MonoBehaviour
     {
         Coins += value;
         coinsText.text = Coins.ToString();
+    }
+
+    public void ResetJumps()
+    {
+        controller.setJumps(maxJumps);
+        jumpsLeftBar.fillAmount = 1;
+    }
+
+    public void setJumps(int value)
+    {
+        jumpsLeftBar.fillAmount = (float)value / maxJumps;
     }
     #endregion
 }
