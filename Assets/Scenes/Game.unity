@@ -5239,14 +5239,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 84
+    m_Font: {fileID: 12800000, guid: 5f28f48221fcf0b49abf965967d2bf8a, type: 3}
+    m_FontSize: 115
     m_FontStyle: 1
     m_BestFit: 0
     m_MinSize: 10
@@ -5650,6 +5650,7 @@ MonoBehaviour:
   - {fileID: 6830265655524521719, guid: f52f7c32e06262d4fb064137451f76aa, type: 3}
   - {fileID: 3323838633980944985, guid: 3b11ce807229fc64cb9b93a66a8eca1a, type: 3}
   - {fileID: 8973757246788347117, guid: 0a03452ad8a982a4aa7fcf484b918ab2, type: 3}
+  - {fileID: 4718879972337829447, guid: 3a65e62083b912241bc77665539bda10, type: 3}
   Coin: {fileID: 85380735612401680, guid: 52cd06871859a204cac05478ce37ddd5, type: 3}
   player: {fileID: 317963732}
 --- !u!4 &820123171
@@ -5798,7 +5799,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efe9475928639e44ca04b399091a2faf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemiesOnMap: 10
+  targetEnemiesOnMap: 10
   enemyGameObject: {fileID: 1916632602607823225, guid: 72d3c763432445840a3a8996d1adc164,
     type: 3}
 --- !u!1 &889548006
@@ -63810,8 +63811,8 @@ Canvas:
   m_GameObject: {fileID: 1303861228}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 1
+  m_Camera: {fileID: 519420031}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -63819,7 +63820,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
-  m_SortingLayerID: 0
+  m_SortingLayerID: -824438099
   m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!224 &1303861232
@@ -64550,7 +64551,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -64680,5 +64681,11 @@ PrefabInstance:
       propertyPath: jumpsLeftBar
       value: 
       objectReference: {fileID: 1217403839}
+    - target: {fileID: 6813766310213542006, guid: 2f2a9f2961cc846488f5177b0821e6b4,
+        type: 3}
+      propertyPath: DeathCanvas
+      value: 
+      objectReference: {fileID: 6925976225757908540, guid: 3958dde5fa1d30947a3e1c3e2648a333,
+        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2f2a9f2961cc846488f5177b0821e6b4, type: 3}

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1916632602607823205}
   - component: {fileID: 1916632602607823202}
   - component: {fileID: 1916632602607823206}
-  - component: {fileID: 8245262394551821910}
+  - component: {fileID: 7357397891568546149}
   m_Layer: 2
   m_Name: enemy
   m_TagString: Enemy
@@ -47,11 +47,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aabd96b9d0c9af84bb49a6babac53385, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHp: 100
+  maxHp: 50
   bulletSpeed: 4
-  movementSpeed: 3
-  inAirSpeedMultipler: 2
+  movementSpeed: 5
+  inAirSpeedMultipler: 0.75
   dashChance: 0.25
+  timeMultipler: 3
+  triggerOnInstantiate: 0
   triggerDistance: 16
   hpBar: {fileID: 2954508613548497567}
   bulletPrefab: {fileID: 1446030798920411577, guid: b33626310e4b3004ba50dd2624760aff,
@@ -79,7 +81,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!60 &8245262394551821910
+--- !u!60 &7357397891568546149
 PolygonCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -88,7 +90,7 @@ PolygonCollider2D:
   m_GameObject: {fileID: 1916632602607823225}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 5beb6e793536b5c45a4384b6b1080580, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
@@ -105,10 +107,11 @@ PolygonCollider2D:
   m_Points:
     m_Paths:
     - - {x: 0, y: 0.5}
-      - {x: -0.47552827, y: 0.15450849}
-      - {x: -0.2938926, y: -0.40450853}
-      - {x: 0.29389268, y: -0.40450847}
-      - {x: 0.47552824, y: 0.15450856}
+      - {x: -0.43301272, y: 0.24999999}
+      - {x: -0.4330127, y: -0.25000003}
+      - {x: 0.00000004371139, y: -0.5}
+      - {x: 0.43301272, y: -0.24999996}
+      - {x: 0.43301272, y: 0.24999996}
 --- !u!1 &2954508613548497567
 GameObject:
   m_ObjectHideFlags: 0
@@ -180,7 +183,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 90ba6efe0dc440043a796f12bbfe6e50, type: 3}
-  m_Color: {r: 0.4716981, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -231,7 +234,7 @@ GameObject:
   - component: {fileID: 8135160589586850960}
   - component: {fileID: 7248746542344486131}
   m_Layer: 0
-  m_Name: playerSprite
+  m_Name: enemySprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

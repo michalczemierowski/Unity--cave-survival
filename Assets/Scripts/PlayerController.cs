@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -8,32 +9,36 @@ public class PlayerController : MonoBehaviour
 {
     public static PlayerController Instance;
 
-    [Header("Settings")][Space]
-    [SerializeField][Tooltip("Movement speed multipler")] private float movementSpeedMultipler = 2f;
-    [SerializeField][Tooltip("Number of jumps")] private int maxJumps = 2;
-    [SerializeField][Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
-    [SerializeField][Tooltip("Time between shots")] private float timeBetweenShoots = 0.3f;
-    [SerializeField][Tooltip("Duration of the stunning effect")] private float stunDuration = 1.3f;
-    [SerializeField][Tooltip("Can a player shoot when he's stunned")] private bool canShootWhileStunned;
-    [SerializeField][Tooltip("Duration of the dash")] private float dashDuration = 2f;
-    [SerializeField][Tooltip("The price of using the dash")] private int dashCost = 15;
+    [Header("Settings")] [Space]
+    [SerializeField] [Tooltip("Movement speed multipler")] private float movementSpeedMultipler = 2f;
+    [SerializeField] [Tooltip("Number of jumps")] private int maxJumps = 2;
+    [SerializeField] [Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
+    [SerializeField] [Tooltip("Time between shots")] private float timeBetweenShoots = 0.3f;
+    [SerializeField] [Tooltip("Duration of the stunning effect")] private float stunDuration = 1.3f;
+    [SerializeField] [Tooltip("Can a player shoot when he's stunned")] private bool canShootWhileStunned;
+    [SerializeField] [Tooltip("Duration of the dash")] private float dashDuration = 2f;
+    [SerializeField] [Tooltip("The price of using the dash")] private int dashCost = 15;
+    [SerializeField] [Tooltip("Maximum number of enemies on the map per level, 0 or empty field means no change")] private int[] targetEnemiesOnMap = { 5, 7, 10, 13, 15 };
+    [SerializeField] [Tooltip("Enemy time between shots multipler per level, 0 or empty field means no change")] private float[] enemyTimeMultipler = { 3f, 2.6f, 2f, 1.5f };
 
-    [Space][Header("Game Objects")][Space]
-    [SerializeField][Tooltip("Bullet GameObject")] private GameObject bulletPrefab;
-    [SerializeField][Tooltip("The object on whose position the bullets will be created")] private Transform bulletSpawnPos;
-    [SerializeField][Tooltip("The object around which the weapon will rotate")] private GameObject weaponPivot;
+    [Space] [Header("Game Objects")] [Space]
+    [SerializeField] [Tooltip("Bullet GameObject")] private GameObject bulletPrefab;
+    [SerializeField] [Tooltip("The object on whose position the bullets will be created")] private Transform bulletSpawnPos;
+    [SerializeField] [Tooltip("The object around which the weapon will rotate")] private GameObject weaponPivot;
 
-    [Space][Header("UI")][Space]
-    [SerializeField][Tooltip("Reload progress image with type \"Filled\"")] private Image reloadProgress;
-    [SerializeField][Tooltip("Healthbar image with type \"Filled\"")] private Image healthBar;
-    [SerializeField][Tooltip("Remaining jumps image with type \"Filled\"")] private Image jumpsLeftBar;
-    [SerializeField][Tooltip("Cursor image")] private GameObject crosshair;
-    [SerializeField][Tooltip("Text in which the number of points will be displayed")] private Image pointsBar;
-    [SerializeField][Tooltip("Text in which the number of coins will be displayed")] private Text coinsText;
+    [Space] [Header("UI")] [Space]
+    [SerializeField] [Tooltip("Reload progress image with type \"Filled\"")] private Image reloadProgress;
+    [SerializeField] [Tooltip("Healthbar image with type \"Filled\"")] private Image healthBar;
+    [SerializeField] [Tooltip("Remaining jumps image with type \"Filled\"")] private Image jumpsLeftBar;
+    [SerializeField] [Tooltip("Cursor image")] private GameObject crosshair;
+    [SerializeField] [Tooltip("Text in which the number of points will be displayed")] private Image pointsBar;
+    [SerializeField] [Tooltip("Text in which the number of coins will be displayed")] private Text coinsText;
+    [SerializeField] [Tooltip("Canvas which will be displayer on death")] private GameObject DeathCanvas;
 
     private CharacterController2D controller;
     private EffectHandler effectHandler;
     private TilemapManager tileManager;
+    private EnemySpawner spawner;
 
     private float movementForce;
     private float gravityScale;
@@ -47,10 +52,12 @@ public class PlayerController : MonoBehaviour
     protected float Health = 1f;
     protected float Points;
     protected int Coins = 5;
+    protected int Level;
 
     protected bool isDashing;
     protected bool isInvulnerable;
     protected bool isControllable = true;
+    protected bool Dead;
 
     private Camera cam;
     private Vector3 lookPos;
@@ -67,9 +74,12 @@ public class PlayerController : MonoBehaviour
         cam = Camera.main;
         effectHandler = EffectHandler.Instance;
         tileManager = TilemapManager.Instance;
+        spawner = EnemySpawner.Instance;
         timeLeft = timeBetweenShoots;
 
         gravityScale = mRigidbody2D.gravityScale;
+        spawner.SetTargetEnemies(targetEnemiesOnMap[0]);
+        Cursor.visible = false;
 
         healthBar.fillAmount = Health;
         coinsText.text = Coins.ToString();
@@ -114,15 +124,23 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        Aim();
-        HandleInput();
+        if (!Dead)
+        {
+            Aim();
+            HandleInput();
+        }
+        else if(Time.timeScale > 0)
+        {
+            Time.timeScale -= Time.deltaTime/2;
+            Time.fixedDeltaTime = 0.02f * Time.timeScale;
+        }
     }
 
     private void FixedUpdate()
     {
         if (isDashing)
             mRigidbody2D.velocity = weaponPivot.transform.right * 25;
-        else if(isControllable)
+        else if (isControllable)
             controller.Move(movementForce, false, jump);
         jump = false;
     }
@@ -130,7 +148,6 @@ public class PlayerController : MonoBehaviour
     #region PRIVATE FUNCTIONS
     private void HandleInput()
     {
-        crosshair.transform.position = Input.mousePosition;
         movementForce = Input.GetAxisRaw("Horizontal") * movementSpeedMultipler;
         if (Input.GetButtonDown("Jump"))
         {
@@ -176,17 +193,16 @@ public class PlayerController : MonoBehaviour
         if (isInvulnerable)
             return;
         Health -= (float)value / 100f;
-        if(Health <= 0)
-        {
-            // TODO: DEATH
-            Health = 0;
-        }
+        if (Health <= 0)
+            Death();
+
         healthBar.fillAmount = Health;
     }
 
     private void Aim()
     {
         lookPos = cam.ScreenToWorldPoint(Input.mousePosition);
+        crosshair.transform.position = new Vector3(lookPos.x, lookPos.y, 0);
 
         lookPos = lookPos - transform.position;
         float angle = Mathf.Atan2(lookPos.y, lookPos.x) * Mathf.Rad2Deg;
@@ -220,18 +236,39 @@ public class PlayerController : MonoBehaviour
         effectHandler.PlaySound(transform.position, SoundType.Stun);
     }
 
+    private void Death()
+    {
+        Instantiate(DeathCanvas, Vector3.zero, Quaternion.identity);
+        effectHandler.InstantiateParticle(transform.position, ParticleType.PlayerDeath);
+
+        foreach (EnemyEventHandler enemy in spawner.GetEnemies())
+        {
+            if (Vector2.Distance(enemy.transform.position, transform.position) < 10)
+                enemy.Damage(100);
+        }
+        isInvulnerable = true;
+        isControllable = false;
+        Dead = true;
+
+        crosshair.transform.parent.gameObject.SetActive(false);
+        Cursor.visible = true;
+    }
+
     private void LvlUP()
     {
         Heal(100);
         effectHandler.InstantiateParticle(transform.position, ParticleType.LvlUp, transform);
         effectHandler.PlaySound(transform.position, SoundType.LvlUp);
-        foreach(GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy"))
+        Level++;
+        if(Level < targetEnemiesOnMap.Length && targetEnemiesOnMap[Level] != 0)
+            spawner.SetTargetEnemies(targetEnemiesOnMap[Level]);
+
+        if (Level < enemyTimeMultipler.Length && enemyTimeMultipler[Level] != 0)
+            spawner.setTimeMultipler(enemyTimeMultipler[Level]);
+        foreach (EnemyEventHandler enemy in spawner.GetEnemies())
         {
             if(Vector2.Distance(enemy.transform.position, transform.position) < 10)
-            {
-                var enemyEvent = enemy.GetComponent<EnemyEventHandler>();
-                enemyEvent.Damage(100);
-            }
+                enemy.Damage(100);
         }
     }
 

@@ -35,14 +35,15 @@ public class BulletEventHandler : MonoBehaviour
                     EffectHandler.Instance.PlaySound(transform.position, SoundType.Hurt);
                     EffectHandler.Instance.InstantiateParticleWithRotation(transform.position, ParticleType.PlayerBlood);
                     collision.GetComponent<PlayerController>().Damage(5);
+                    Destroy(gameObject);
                 }
                 else if (collision.tag == "Scene")
                 {
                     EffectHandler.Instance.PlaySound(transform.position, SoundType.Hit);
                     EffectHandler.Instance.InstantiateParticleWithRotation(transform.position, ParticleType.WallEnemy);
                     TilemapManager.Instance.GetTilemap(0).DamageTile(Vector3Int.CeilToInt(transform.position) - Vector3.one, 0.35f);
+                    Destroy(gameObject);
                 }
-                Destroy(gameObject);
             }
         }
     }

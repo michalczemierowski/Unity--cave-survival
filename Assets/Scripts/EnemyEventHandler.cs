@@ -10,6 +10,8 @@ public class EnemyEventHandler : MonoBehaviour
     [SerializeField][Tooltip("Movement speed multipler")] private float movementSpeed = 3;
     [SerializeField][Range(0,3)][Tooltip("Airborne speed multiplier")] private float inAirSpeedMultipler = 2;
     [SerializeField][Range(0, 1)][Tooltip("Chance to dash instead of a shot")] private float dashChance = 0.25f;
+    [SerializeField][Tooltip("Time multiplier between shots")] private float timeMultipler = 3f;
+    [SerializeField][Tooltip("Attack regardless of distance")] private bool triggerOnInstantiate = false;
     [SerializeField][Tooltip("The distance in which enemies will begin to attack")] private float triggerDistance = 16;
 
     [Space][Header("Game Objects")][Space]
@@ -20,6 +22,8 @@ public class EnemyEventHandler : MonoBehaviour
 
     private EffectHandler effectHandler;
     private PlayerController controller;
+    private EnemySpawner spawner;
+
     private Vector3 hpBarScale;
     private GameObject player;
     private Rigidbody2D mRigidbody2D;
@@ -29,6 +33,11 @@ public class EnemyEventHandler : MonoBehaviour
     protected float timeToShoot;
     protected int currentHp;
 
+    public void setTimeMultipler(float value)
+    {
+        timeMultipler = value;
+    }
+
     private void Start()
     {
         currentHp = maxHp;
@@ -37,6 +46,13 @@ public class EnemyEventHandler : MonoBehaviour
         mRigidbody2D = GetComponent<Rigidbody2D>();
         effectHandler = EffectHandler.Instance;
         controller = PlayerController.Instance;
+        spawner = EnemySpawner.Instance;
+
+        if(triggerOnInstantiate)
+        {
+            isTriggered = true;
+            timeToShoot = Random.value * timeMultipler;
+        }
     }
 
     private void Update()
@@ -46,14 +62,18 @@ public class EnemyEventHandler : MonoBehaviour
             if (Vector2.Distance(player.transform.position, transform.position) < triggerDistance)
             {
                 isTriggered = true;
-                timeToShoot = Random.value * 5;
+                timeToShoot = Random.value * timeMultipler;
             }
         }
         else
         {
             Aim();
             if (timeToShoot <= 0)
-                Shoot();
+            {
+                if (Random.value > dashChance)
+                    Shoot();
+                else Dash();
+            }
             else
                 timeToShoot -= Time.deltaTime;
         }
@@ -107,6 +127,7 @@ public class EnemyEventHandler : MonoBehaviour
 
     private void Death()
     {
+        spawner.KilledEnemy(this);
         Destroy(gameObject);
         controller.AddPoints(10);
         controller.AddCoins(Random.Range(2, 5));
@@ -116,19 +137,17 @@ public class EnemyEventHandler : MonoBehaviour
 
     private void Shoot()
     {
-        if (Random.value > dashChance)
+        RaycastHit2D shoot;
+        shoot = Physics2D.Raycast(transform.position, weaponPivot.transform.right, 10);
+        if (shoot.collider == null || shoot.collider.tag == "Player")
         {
             GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
             bullet.transform.rotation = weaponPivot.transform.rotation;
             bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * bulletSpeed, ForceMode2D.Impulse);
             effectHandler.PlaySound(transform.position, SoundType.Shoot);
         }
-        else
-        {
-            Dash();
-        }
 
-        timeToShoot = Random.value * 3;
+        timeToShoot = Random.value * timeMultipler;
     }
 
     private void Dash()

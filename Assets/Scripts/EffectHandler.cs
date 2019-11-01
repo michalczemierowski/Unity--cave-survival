@@ -84,5 +84,6 @@ public enum ParticleType
     EnemyDeath = 4,
     Coin = 5,
     LvlUp = 6,
-    Stun = 7
+    Stun = 7,
+    PlayerDeath = 8
 }
