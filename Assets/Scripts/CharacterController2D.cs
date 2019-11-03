@@ -29,6 +29,7 @@ public class CharacterController2D : MonoBehaviour
 
 	public UnityEvent OnLandEvent;
     public UnityEvent OnJumpEvent;
+    public UnityEvent OnShootEvent;
 
     [System.Serializable]
 	public class BoolEvent : UnityEvent<bool> { }
@@ -36,7 +37,6 @@ public class CharacterController2D : MonoBehaviour
 	public BoolEvent OnCrouchEvent;
 	private bool m_wasCrouching = false;
     private EffectHandler sfx;
-    private Animator animator;
 
 	private void Awake()
 	{
@@ -49,6 +49,9 @@ public class CharacterController2D : MonoBehaviour
         if (OnJumpEvent == null)
             OnJumpEvent = new UnityEvent();
 
+        if (OnShootEvent == null)
+            OnShootEvent = new UnityEvent();
+
         if (OnCrouchEvent == null)
 			OnCrouchEvent = new BoolEvent();
 	}
@@ -56,7 +59,6 @@ public class CharacterController2D : MonoBehaviour
     private void Start()
     {
         sfx = EffectHandler.Instance;
-        animator = GetComponent<Animator>();
     }
 
     private void FixedUpdate()
@@ -85,6 +87,10 @@ public class CharacterController2D : MonoBehaviour
     public void setJumps(int value)
     {
         jumps = value;
+    }
+    public void Shoot()
+    {
+        OnShootEvent.Invoke();
     }
 
 

@@ -1,12 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class EnemyEventHandler : MonoBehaviour
 {
     [Header("Settings")][Space]
     [SerializeField][Tooltip("Maximum health ")] private int maxHp = 100;
+    [Tooltip("Particles color ")] public Color mainColor;
     [SerializeField][Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
+    [SerializeField][Tooltip("Bullet/Dash damage")] private int damage = 5;
     [SerializeField][Tooltip("Movement speed multipler")] private float movementSpeed = 3;
     [SerializeField][Range(0,3)][Tooltip("Airborne speed multiplier")] private float inAirSpeedMultipler = 2;
     [SerializeField][Range(0, 1)][Tooltip("Chance to dash instead of a shot")] private float dashChance = 0.25f;
@@ -15,13 +18,19 @@ public class EnemyEventHandler : MonoBehaviour
     [SerializeField][Tooltip("The distance in which enemies will begin to attack")] private float triggerDistance = 16;
 
     [Space][Header("Game Objects")][Space]
-    [SerializeField] [Tooltip("Health indicator sprite")] private GameObject hpBar;
+    [SerializeField][Tooltip("Health indicator sprite")] private GameObject hpBar;
     [SerializeField][Tooltip("Bullet GameObject")] private GameObject bulletPrefab;
     [SerializeField][Tooltip("The object on whose position the bullets will be created")] private Transform bulletSpawnPos;
     [SerializeField][Tooltip("The object around which the weapon will rotate")] private GameObject weaponPivot;
 
+    [Header("Events")]
+    [Space]
+    public UnityEvent OnShootEvent;
+    public UnityEvent OnDashEvent;
+
     private EffectHandler effectHandler;
     private PlayerController controller;
+    private StatsManager statsManager;
     private EnemySpawner spawner;
 
     private Vector3 hpBarScale;
@@ -40,6 +49,12 @@ public class EnemyEventHandler : MonoBehaviour
 
     private void Start()
     {
+        if (OnShootEvent == null)
+            OnShootEvent = new UnityEvent();
+        if (OnDashEvent == null)
+            OnDashEvent = new UnityEvent();
+
+        hpBar.GetComponent<SpriteRenderer>().color = mainColor;
         currentHp = maxHp;
         hpBarScale = hpBar.transform.localScale;
         player = EffectHandler.Instance.player;
@@ -47,8 +62,9 @@ public class EnemyEventHandler : MonoBehaviour
         effectHandler = EffectHandler.Instance;
         controller = PlayerController.Instance;
         spawner = EnemySpawner.Instance;
+        statsManager = StatsManager.Instance;
 
-        if(triggerOnInstantiate)
+        if (triggerOnInstantiate)
         {
             isTriggered = true;
             timeToShoot = Random.value * timeMultipler;
@@ -91,7 +107,7 @@ public class EnemyEventHandler : MonoBehaviour
 
         if (difference.x > 0)
         {
-            RaycastHit2D r = Physics2D.Raycast(transform.position, Vector2.right, 1);
+            RaycastHit2D r = Physics2D.Raycast(transform.position, Vector2.right, transform.localScale.x);
             if (r.collider == null)
             {
                 transform.position = new Vector2(transform.position.x + step, transform.position.y);
@@ -103,7 +119,7 @@ public class EnemyEventHandler : MonoBehaviour
         }
         else
         {
-            RaycastHit2D l = Physics2D.Raycast(transform.position, Vector2.left, 1);
+            RaycastHit2D l = Physics2D.Raycast(transform.position - (Vector3.down / 2), Vector2.left, transform.localScale.x);
             if (l.collider == null)
             {
                 transform.position = new Vector2(transform.position.x - step, transform.position.y);
@@ -123,6 +139,14 @@ public class EnemyEventHandler : MonoBehaviour
             Death();
 
         hpBar.transform.localScale = new Vector3(hpBarScale.x * ((float)currentHp / (float)maxHp), hpBarScale.y, hpBarScale.z);
+
+        //STATS
+        statsManager.CauseDamage(dmg);
+    }
+
+    public int GetDamage()
+    {
+        return damage;
     }
 
     private void Death()
@@ -133,18 +157,23 @@ public class EnemyEventHandler : MonoBehaviour
         controller.AddCoins(Random.Range(2, 5));
         effectHandler.InstantiateParticle(transform.position, ParticleType.EnemyDeath, destroyTime:5);
         effectHandler.PlaySound(transform.position, SoundType.EnemyDeath);
+
+        //STATS
+        statsManager.KillEnemy();
     }
 
     private void Shoot()
     {
         RaycastHit2D shoot;
         shoot = Physics2D.Raycast(transform.position, weaponPivot.transform.right, 10);
-        if (shoot.collider == null || shoot.collider.tag == "Player")
+        if (shoot.collider != null && shoot.collider.tag == "Player")
         {
             GameObject bullet = Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+            bullet.GetComponent<BulletEventHandler>().damage = damage;
             bullet.transform.rotation = weaponPivot.transform.rotation;
             bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * bulletSpeed, ForceMode2D.Impulse);
             effectHandler.PlaySound(transform.position, SoundType.Shoot);
+            OnShootEvent.Invoke();
         }
 
         timeToShoot = Random.value * timeMultipler;
@@ -154,10 +183,12 @@ public class EnemyEventHandler : MonoBehaviour
     {
         RaycastHit2D shoot;
         shoot = Physics2D.Raycast(transform.position, weaponPivot.transform.right, 10);
-        if (shoot.collider == null || shoot.collider.tag == "Player")
+        if (shoot.collider != null && shoot.collider.tag == "Player")
+        {
             mRigidbody2D.AddForce(weaponPivot.transform.right * 15, ForceMode2D.Impulse);
-        else
-            Shoot();
+            OnDashEvent.Invoke();
+        }
+        timeToShoot = Random.value * timeMultipler;
     }
 
     private void Aim()

@@ -5379,7 +5379,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.76, y: -2.66, z: -10}
+  m_LocalPosition: {x: -10, y: -4.16, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -5596,7 +5596,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 779391195}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -8.76, y: -2.66, z: -10}
+  m_LocalPosition: {x: -10, y: -4.16, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1189972103}
@@ -5733,8 +5733,9 @@ GameObject:
   - component: {fileID: 823281587}
   - component: {fileID: 823281590}
   - component: {fileID: 823281589}
+  - component: {fileID: 823281591}
   m_Layer: 0
-  m_Name: Grid
+  m_Name: Grid & Manager
   m_TagString: Scene
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5799,9 +5800,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efe9475928639e44ca04b399091a2faf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetEnemiesOnMap: 10
-  enemyGameObject: {fileID: 1916632602607823225, guid: 72d3c763432445840a3a8996d1adc164,
-    type: 3}
+  enemyGameObjects:
+  - {fileID: 1916632602607823225, guid: 72d3c763432445840a3a8996d1adc164, type: 3}
+  - {fileID: 7725981501320480043, guid: aab7f94cd56f2c04e83f1085489b908d, type: 3}
+  - {fileID: 5303994247273809961, guid: 1810ddba80a35fc4797b47bc6a6bd3ec, type: 3}
+  targetEnemiesOnMap: 05000000070000000a0000000d0000000f000000
+--- !u!114 &823281591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823281586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4158f4b12b8bd7649864ec2e5d7f6203, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &889548006
 GameObject:
   m_ObjectHideFlags: 0
@@ -63433,7 +63448,7 @@ MonoBehaviour:
   m_LookaheadSmoothing: 10
   m_LookaheadIgnoreY: 0
   m_XDamping: 1
-  m_YDamping: 1
+  m_YDamping: 2
   m_ZDamping: 1
   m_ScreenX: 0.5
   m_ScreenY: 0.5
@@ -63443,7 +63458,7 @@ MonoBehaviour:
   m_DeadZoneDepth: 0
   m_UnlimitedSoftZone: 0
   m_SoftZoneWidth: 0.8
-  m_SoftZoneHeight: 0.8
+  m_SoftZoneHeight: 0.98
   m_BiasX: 0
   m_BiasY: 0
   m_CenterOnActivate: 1
@@ -64589,12 +64604,12 @@ PrefabInstance:
     - target: {fileID: 6813766310213542011, guid: 2f2a9f2961cc846488f5177b0821e6b4,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -8.76
+      value: -10
       objectReference: {fileID: 0}
     - target: {fileID: 6813766310213542011, guid: 2f2a9f2961cc846488f5177b0821e6b4,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.66
+      value: -4.16
       objectReference: {fileID: 0}
     - target: {fileID: 6813766310213542011, guid: 2f2a9f2961cc846488f5177b0821e6b4,
         type: 3}
@@ -64641,11 +64656,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6813766310213542011, guid: 2f2a9f2961cc846488f5177b0821e6b4,
-        type: 3}
-      propertyPath: m_LocalScale.z
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6813766310213542006, guid: 2f2a9f2961cc846488f5177b0821e6b4,
         type: 3}
       propertyPath: reloadProgress
@@ -64656,6 +64666,11 @@ PrefabInstance:
       propertyPath: healthBar
       value: 
       objectReference: {fileID: 1922684230}
+    - target: {fileID: 6813766310213542006, guid: 2f2a9f2961cc846488f5177b0821e6b4,
+        type: 3}
+      propertyPath: jumpsLeftBar
+      value: 
+      objectReference: {fileID: 1217403839}
     - target: {fileID: 6813766310213542006, guid: 2f2a9f2961cc846488f5177b0821e6b4,
         type: 3}
       propertyPath: crosshair
@@ -64671,21 +64686,5 @@ PrefabInstance:
       propertyPath: coinsText
       value: 
       objectReference: {fileID: 464545201}
-    - target: {fileID: 6813766310213542006, guid: 2f2a9f2961cc846488f5177b0821e6b4,
-        type: 3}
-      propertyPath: stunDuration
-      value: 1.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 6813766310213542006, guid: 2f2a9f2961cc846488f5177b0821e6b4,
-        type: 3}
-      propertyPath: jumpsLeftBar
-      value: 
-      objectReference: {fileID: 1217403839}
-    - target: {fileID: 6813766310213542006, guid: 2f2a9f2961cc846488f5177b0821e6b4,
-        type: 3}
-      propertyPath: DeathCanvas
-      value: 
-      objectReference: {fileID: 6925976225757908540, guid: 3958dde5fa1d30947a3e1c3e2648a333,
-        type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2f2a9f2961cc846488f5177b0821e6b4, type: 3}

@@ -24,7 +24,7 @@ public class EffectHandler : MonoBehaviour
         SFX[intType].Play();
     }
 
-    public void InstantiateParticleWithRotation(Vector3 position, ParticleType type, float destroyTime = 5f)
+    public void InstantiateParticleWithRotation(Vector3 position, ParticleType type, float destroyTime = 5f, Color color = new Color())
     {
         int intType = (int)type;
         GameObject particle = Instantiate(VFX[intType], position, Quaternion.identity);
@@ -35,6 +35,12 @@ public class EffectHandler : MonoBehaviour
 
         particle.transform.rotation = Quaternion.AngleAxis(angle - 45, Vector3.forward);
         particle.transform.position = particle.transform.position + particle.transform.right;
+        ParticleSystem ps = particle.GetComponent<ParticleSystem>();
+        if (color != null)
+        {
+            var main = ps.main;
+            main.startColor = color;
+        }
         particle.GetComponent<ParticleSystem>().Play();
 
         StartCoroutine(destroyParticleTimer(particle, 5));

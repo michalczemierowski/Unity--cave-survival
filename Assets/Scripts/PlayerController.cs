@@ -13,13 +13,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] [Tooltip("Movement speed multipler")] private float movementSpeedMultipler = 2f;
     [SerializeField] [Tooltip("Number of jumps")] private int maxJumps = 2;
     [SerializeField] [Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
+    [SerializeField] [Tooltip("Bullet damage")] private int bulletDamage = 5;
     [SerializeField] [Tooltip("Time between shots")] private float timeBetweenShoots = 0.3f;
     [SerializeField] [Tooltip("Duration of the stunning effect")] private float stunDuration = 1.3f;
     [SerializeField] [Tooltip("Can a player shoot when he's stunned")] private bool canShootWhileStunned;
     [SerializeField] [Tooltip("Duration of the dash")] private float dashDuration = 2f;
     [SerializeField] [Tooltip("The price of using the dash")] private int dashCost = 15;
-    [SerializeField] [Tooltip("Maximum number of enemies on the map per level, 0 or empty field means no change")] private int[] targetEnemiesOnMap = { 5, 7, 10, 13, 15 };
-    [SerializeField] [Tooltip("Enemy time between shots multipler per level, 0 or empty field means no change")] private float[] enemyTimeMultipler = { 3f, 2.6f, 2f, 1.5f };
 
     [Space] [Header("Game Objects")] [Space]
     [SerializeField] [Tooltip("Bullet GameObject")] private GameObject bulletPrefab;
@@ -37,12 +36,14 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController2D controller;
     private EffectHandler effectHandler;
+    private StatsManager statsManager;
     private TilemapManager tileManager;
     private EnemySpawner spawner;
+    private Rigidbody2D mRigidbody2D;
+    private Animator mAnimator;
 
     private float movementForce;
     private float gravityScale;
-    private Rigidbody2D mRigidbody2D;
     private bool jump;
 
     protected bool canShoot;
@@ -70,15 +71,17 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         mRigidbody2D = GetComponent<Rigidbody2D>();
+        mAnimator = GetComponent<Animator>();
         controller = GetComponent<CharacterController2D>();
         cam = Camera.main;
         effectHandler = EffectHandler.Instance;
         tileManager = TilemapManager.Instance;
         spawner = EnemySpawner.Instance;
+        statsManager = StatsManager.Instance;
         timeLeft = timeBetweenShoots;
 
         gravityScale = mRigidbody2D.gravityScale;
-        spawner.SetTargetEnemies(targetEnemiesOnMap[0]);
+        mAnimator.SetFloat("shootSpeed", timeBetweenShoots * 5);
         Cursor.visible = false;
 
         healthBar.fillAmount = Health;
@@ -112,6 +115,7 @@ public class PlayerController : MonoBehaviour
                 if (isControllable)
                 {
                     Stun();
+                    Damage(collision.GetComponentInParent<EnemyEventHandler>().GetDamage());
                 }
                 var velocity = transform.up * 5;
                 collision.GetComponentInParent<Rigidbody2D>().AddForce(-velocity, ForceMode2D.Impulse);
@@ -197,6 +201,9 @@ public class PlayerController : MonoBehaviour
             Death();
 
         healthBar.fillAmount = Health;
+
+        //STATS
+        statsManager.ReceiveDamage(value);
     }
 
     private void Aim()
@@ -212,11 +219,16 @@ public class PlayerController : MonoBehaviour
 
     private void Shoot()
     {
+        controller.Shoot();
         GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPos.position, Quaternion.identity);
+        bullet.GetComponent<BulletEventHandler>().damage = bulletDamage;
         bullet.transform.rotation = weaponPivot.transform.rotation;
         bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * bulletSpeed, ForceMode2D.Impulse);
         effectHandler.PlaySound(transform.position, SoundType.Shoot);
         canShoot = false;
+
+        //STATS
+        statsManager.Shoot();
     }
 
     private void Dash()
@@ -226,12 +238,14 @@ public class PlayerController : MonoBehaviour
             AddCoins(-dashCost);
             StartCoroutine(IEDash(dashDuration));
             mRigidbody2D.AddForce(weaponPivot.transform.right * 20, ForceMode2D.Impulse);
+
+            //STATS
+            statsManager.Dash();
         }
     }
 
     private void Stun()
     {
-        Damage(10);
         effectHandler.InstantiateParticle(transform.position, ParticleType.Stun, transform, stunDuration);
         effectHandler.PlaySound(transform.position, SoundType.Stun);
     }
@@ -252,6 +266,19 @@ public class PlayerController : MonoBehaviour
 
         crosshair.transform.parent.gameObject.SetActive(false);
         Cursor.visible = true;
+
+        PrintStats();
+    }
+
+    private void PrintStats()
+    {
+        // TODO: SHOW STATS
+        Stats stats = statsManager.GetStats();
+        print(stats.causedDamage + " CAUSED DAMAGE");
+        print(stats.receivedDamage + " RECEIVED DAMAGE");
+        print(stats.shotsFired + " SHOTS FIRED");
+        print(stats.usedDashes + " USED DASHES");
+        print(stats.enemiesKilled + " ENEMIES KILLED");
     }
 
     private void LvlUP()
@@ -259,12 +286,10 @@ public class PlayerController : MonoBehaviour
         Heal(100);
         effectHandler.InstantiateParticle(transform.position, ParticleType.LvlUp, transform);
         effectHandler.PlaySound(transform.position, SoundType.LvlUp);
-        Level++;
-        if(Level < targetEnemiesOnMap.Length && targetEnemiesOnMap[Level] != 0)
-            spawner.SetTargetEnemies(targetEnemiesOnMap[Level]);
 
-        if (Level < enemyTimeMultipler.Length && enemyTimeMultipler[Level] != 0)
-            spawner.setTimeMultipler(enemyTimeMultipler[Level]);
+        Level++;
+        spawner.SetLevel(Level);
+
         foreach (EnemyEventHandler enemy in spawner.GetEnemies())
         {
             if(Vector2.Distance(enemy.transform.position, transform.position) < 10)

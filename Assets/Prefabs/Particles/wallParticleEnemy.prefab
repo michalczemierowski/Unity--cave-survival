@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7074763567723423769}
   - component: {fileID: 7074763567723423770}
   m_Layer: 0
-  m_Name: wallParticle
+  m_Name: wallParticleEnemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
