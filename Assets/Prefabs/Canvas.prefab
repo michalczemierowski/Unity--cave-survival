@@ -64,7 +64,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 5f28f48221fcf0b49abf965967d2bf8a, type: 3}
+    m_Font: {fileID: 12800000, guid: c39b01acffda3c44bb3e698d9bae8e0e, type: 3}
     m_FontSize: 92
     m_FontStyle: 0
     m_BestFit: 0
@@ -189,6 +189,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b86b812fdbf39441b44953c9ad1c2f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  white: {r: 0, g: 0, b: 0, a: 0}
+  gray: {r: 0, g: 0, b: 0, a: 0}
+  loadingAnim: {fileID: 0}
+  loginFormObject: {fileID: 0}
+  openLoginFormButton: {fileID: 0}
+  registerFormObject: {fileID: 0}
+  openRegisterFormButton: {fileID: 0}
+  leaderboardObject: {fileID: 0}
+  leaderboardManager: {fileID: 0}
 --- !u!1 &6925976225993226551
 GameObject:
   m_ObjectHideFlags: 0

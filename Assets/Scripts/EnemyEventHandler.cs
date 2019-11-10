@@ -8,6 +8,7 @@ public class EnemyEventHandler : MonoBehaviour
     [Header("Settings")][Space]
     [SerializeField][Tooltip("Maximum health ")] private int maxHp = 100;
     [Tooltip("Particles color ")] public Color mainColor;
+    [Tooltip("Can enemy damage player on touch")] public bool canDamageMeele = true;
     [SerializeField][Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
     [SerializeField][Tooltip("Bullet/Dash damage")] private int damage = 5;
     [SerializeField][Tooltip("Movement speed multipler")] private float movementSpeed = 3;
@@ -36,6 +37,7 @@ public class EnemyEventHandler : MonoBehaviour
     private Vector3 hpBarScale;
     private GameObject player;
     private Rigidbody2D mRigidbody2D;
+    private Vector3 feetPos;
 
     private bool isTriggered;
 
@@ -69,6 +71,7 @@ public class EnemyEventHandler : MonoBehaviour
             isTriggered = true;
             timeToShoot = Random.value * timeMultipler;
         }
+        feetPos = new Vector3(0, transform.localScale.y * 0.5f, 0);
     }
 
     private void Update()
@@ -107,7 +110,7 @@ public class EnemyEventHandler : MonoBehaviour
 
         if (difference.x > 0)
         {
-            RaycastHit2D r = Physics2D.Raycast(transform.position, Vector2.right, transform.localScale.x);
+            RaycastHit2D r = Physics2D.Raycast(transform.position - feetPos, Vector2.right, transform.localScale.x);
             if (r.collider == null)
             {
                 transform.position = new Vector2(transform.position.x + step, transform.position.y);
@@ -119,7 +122,7 @@ public class EnemyEventHandler : MonoBehaviour
         }
         else
         {
-            RaycastHit2D l = Physics2D.Raycast(transform.position - (Vector3.down / 2), Vector2.left, transform.localScale.x);
+            RaycastHit2D l = Physics2D.Raycast(transform.position - feetPos, Vector2.left, transform.localScale.x);
             if (l.collider == null)
             {
                 transform.position = new Vector2(transform.position.x - step, transform.position.y);
@@ -147,6 +150,11 @@ public class EnemyEventHandler : MonoBehaviour
     public int GetDamage()
     {
         return damage;
+    }
+
+    public void Kill()
+    {
+        Death();
     }
 
     private void Death()

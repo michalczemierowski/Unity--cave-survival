@@ -9,6 +9,7 @@ TagManager:
   - Scene
   - Coin
   - EnemyWeapon
+  - SpawnPoint
   layers:
   - Default
   - TransparentFX

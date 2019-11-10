@@ -24,10 +24,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] [Tooltip("Bullet GameObject")] private GameObject bulletPrefab;
     [SerializeField] [Tooltip("The object on whose position the bullets will be created")] private Transform bulletSpawnPos;
     [SerializeField] [Tooltip("The object around which the weapon will rotate")] private GameObject weaponPivot;
+    [SerializeField] [Tooltip("Cinemachine virtual camera")] CameraShake cmVirtualCamShake;
 
     [Space] [Header("UI")] [Space]
     [SerializeField] [Tooltip("Reload progress image with type \"Filled\"")] private Image reloadProgress;
     [SerializeField] [Tooltip("Healthbar image with type \"Filled\"")] private Image healthBar;
+    [SerializeField] [Tooltip("Healthbar flash color")] private Color heathBarFlashColor = Color.red;
     [SerializeField] [Tooltip("Remaining jumps image with type \"Filled\"")] private Image jumpsLeftBar;
     [SerializeField] [Tooltip("Cursor image")] private GameObject crosshair;
     [SerializeField] [Tooltip("Text in which the number of points will be displayed")] private Image pointsBar;
@@ -62,6 +64,7 @@ public class PlayerController : MonoBehaviour
 
     private Camera cam;
     private Vector3 lookPos;
+    private Color startHealthBarColor;
 
     private void Awake()
     {
@@ -73,17 +76,20 @@ public class PlayerController : MonoBehaviour
         mRigidbody2D = GetComponent<Rigidbody2D>();
         mAnimator = GetComponent<Animator>();
         controller = GetComponent<CharacterController2D>();
+
         cam = Camera.main;
         effectHandler = EffectHandler.Instance;
         tileManager = TilemapManager.Instance;
         spawner = EnemySpawner.Instance;
         statsManager = StatsManager.Instance;
-        timeLeft = timeBetweenShoots;
 
+        timeLeft = timeBetweenShoots;
         gravityScale = mRigidbody2D.gravityScale;
         mAnimator.SetFloat("shootSpeed", timeBetweenShoots * 5);
+
         Cursor.visible = false;
 
+        startHealthBarColor = healthBar.color;
         healthBar.fillAmount = Health;
         coinsText.text = Coins.ToString();
         pointsBar.fillAmount = Points;
@@ -104,24 +110,26 @@ public class PlayerController : MonoBehaviour
         */
         if (collision.tag == "EnemyWeapon")
         {
+            EnemyEventHandler enemy = collision.GetComponentInParent<EnemyEventHandler>();
             if (isInvulnerable)
             {
                 //When player is dashing
-                collision.GetComponentInParent<EnemyEventHandler>().Damage(100);
+                enemy.Kill();
             }
             else
             {
+                if (!enemy.canDamageMeele)
+                    return;
+
                 //When enemy hits player
                 if (isControllable)
                 {
                     Stun();
-                    Damage(collision.GetComponentInParent<EnemyEventHandler>().GetDamage());
+                    Damage(enemy.GetDamage());
                 }
                 var velocity = transform.up * 5;
                 collision.GetComponentInParent<Rigidbody2D>().AddForce(-velocity, ForceMode2D.Impulse);
                 mRigidbody2D.AddForce(velocity, ForceMode2D.Impulse);
-                StartCoroutine(DisableControls(stunDuration, canShootWhileStunned));
-                controller.setJumps(maxJumps);
             }
         }
     }
@@ -201,9 +209,22 @@ public class PlayerController : MonoBehaviour
             Death();
 
         healthBar.fillAmount = Health;
+        StartCoroutine(HealthBarFlash());
+
+        if (isControllable)
+            cmVirtualCamShake.Shake(0.2f, shakeAmplitude: 2.5f);
 
         //STATS
         statsManager.ReceiveDamage(value);
+    }
+
+    private IEnumerator HealthBarFlash()
+    {
+        healthBar.color = heathBarFlashColor;
+        healthBar.transform.localScale = new Vector3(1.1f, 1.1f, 1);
+        yield return new WaitForSeconds(0.15f);
+        healthBar.transform.localScale = Vector3.one;
+        healthBar.color = startHealthBarColor;
     }
 
     private void Aim()
@@ -246,8 +267,13 @@ public class PlayerController : MonoBehaviour
 
     private void Stun()
     {
+        StartCoroutine(DisableControls(stunDuration, canShootWhileStunned));
+        controller.setJumps(maxJumps);
+
         effectHandler.InstantiateParticle(transform.position, ParticleType.Stun, transform, stunDuration);
         effectHandler.PlaySound(transform.position, SoundType.Stun);
+
+        cmVirtualCamShake.Shake();
     }
 
     private void Death()
@@ -267,6 +293,8 @@ public class PlayerController : MonoBehaviour
         crosshair.transform.parent.gameObject.SetActive(false);
         Cursor.visible = true;
 
+        //STATS
+        statsManager.Death();
         PrintStats();
     }
 
@@ -293,8 +321,11 @@ public class PlayerController : MonoBehaviour
         foreach (EnemyEventHandler enemy in spawner.GetEnemies())
         {
             if(Vector2.Distance(enemy.transform.position, transform.position) < 10)
-                enemy.Damage(100);
+                enemy.Kill();
         }
+
+        //STATS
+        statsManager.LvlUP();
     }
 
     private IEnumerator IEDash(float time)

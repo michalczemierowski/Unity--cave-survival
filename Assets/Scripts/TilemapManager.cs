@@ -23,6 +23,7 @@ public class TilemapManager : MonoBehaviour
     {
         return tiles[(int)type];
     }
+    
 }
 
 public enum TileType
