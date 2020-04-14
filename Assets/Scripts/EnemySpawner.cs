@@ -8,9 +8,9 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private GameObject player;
     [Space]
     [SerializeField] [Tooltip("Objects with this tag will be used as spawnpoints")] private string spawnPointsTag = "SpawnPoint";
-    [SerializeField][Tooltip("Maximum distance from the player in which they will be spawned, 0 for no limit")] float maxDistanceToPlayer = 50f;
-    [SerializeField][Tooltip("Enemy GameObject")] private GameObject[] enemyGameObjects;
-    [SerializeField][Tooltip("Maximum number of enemies on the map per level, 0 or empty field means no change")] private int[] targetEnemiesOnMap = { 5, 7, 10, 13, 15 };
+    [SerializeField] [Tooltip("Maximum distance from the player in which they will be spawned, 0 for no limit")] float maxDistanceToPlayer = 50f;
+    [SerializeField] [Tooltip("Enemy GameObject")] private GameObject[] enemyGameObjects;
+    [SerializeField] [Tooltip("Maximum number of enemies on the map per level, 0 or empty field means no change")] private int[] targetEnemiesOnMap = { 5, 7, 10, 13, 15 };
 
     private List<EnemyEventHandler> enemiesOnMap = new List<EnemyEventHandler>();
     private Vector3[] spawnPoints;
@@ -78,6 +78,7 @@ public class EnemySpawner : MonoBehaviour
                     if (distance <= maxDistanceToPlayer)
                         inRadius.Add(position);
                 }
+                if (inRadius.Count < 1) return;
                 spawnPos = inRadius[Random.Range(0, inRadius.Count)];
             }
             else

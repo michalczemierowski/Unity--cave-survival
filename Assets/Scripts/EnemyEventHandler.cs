@@ -39,6 +39,8 @@ public class EnemyEventHandler : MonoBehaviour
     private Rigidbody2D mRigidbody2D;
     private Vector3 feetPos;
 
+    private LayerMask moveLayerMask;
+
     private bool isTriggered;
 
     protected float timeToShoot;
@@ -55,6 +57,8 @@ public class EnemyEventHandler : MonoBehaviour
             OnShootEvent = new UnityEvent();
         if (OnDashEvent == null)
             OnDashEvent = new UnityEvent();
+
+        moveLayerMask = LayerMask.GetMask("Player", "Scene");
 
         hpBar.GetComponent<SpriteRenderer>().color = mainColor;
         currentHp = maxHp;
@@ -110,7 +114,7 @@ public class EnemyEventHandler : MonoBehaviour
 
         if (difference.x > 0)
         {
-            RaycastHit2D r = Physics2D.Raycast(transform.position - feetPos, Vector2.right, transform.localScale.x);
+            RaycastHit2D r = Physics2D.Raycast(transform.position - feetPos, Vector2.right, transform.localScale.x, moveLayerMask);
             if (r.collider == null)
             {
                 transform.position = new Vector2(transform.position.x + step, transform.position.y);
@@ -122,7 +126,7 @@ public class EnemyEventHandler : MonoBehaviour
         }
         else
         {
-            RaycastHit2D l = Physics2D.Raycast(transform.position - feetPos, Vector2.left, transform.localScale.x);
+            RaycastHit2D l = Physics2D.Raycast(transform.position - feetPos, Vector2.left, transform.localScale.x, moveLayerMask);
             if (l.collider == null)
             {
                 transform.position = new Vector2(transform.position.x - step, transform.position.y);
@@ -144,7 +148,7 @@ public class EnemyEventHandler : MonoBehaviour
         hpBar.transform.localScale = new Vector3(hpBarScale.x * ((float)currentHp / (float)maxHp), hpBarScale.y, hpBarScale.z);
 
         //STATS
-        statsManager.CauseDamage(dmg);
+        statsManager?.CauseDamage(dmg);
     }
 
     public int GetDamage()
@@ -167,7 +171,7 @@ public class EnemyEventHandler : MonoBehaviour
         effectHandler.PlaySound(transform.position, SoundType.EnemyDeath);
 
         //STATS
-        statsManager.KillEnemy();
+        statsManager?.KillEnemy();
     }
 
     private void Shoot()

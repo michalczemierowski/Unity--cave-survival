@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BulletEventHandler : MonoBehaviour
 {
@@ -14,7 +12,7 @@ public class BulletEventHandler : MonoBehaviour
             {
                 if (collision.tag == "Enemy")
                 {
-                    EnemyEventHandler enemy = collision.GetComponent<EnemyEventHandler>();
+                    EnemyEventHandler enemy = collision.GetComponentInParent<EnemyEventHandler>();
                     EffectHandler.Instance.PlaySound(transform.position, SoundType.Hurt);
                     EffectHandler.Instance.InstantiateParticleWithRotation(transform.position, ParticleType.EnemyBlood, color:enemy.mainColor);
                     enemy.Damage(damage);

@@ -24,7 +24,7 @@ public class EffectHandler : MonoBehaviour
         SFX[intType].Play();
     }
 
-    public void InstantiateParticleWithRotation(Vector3 position, ParticleType type, float destroyTime = 5f, Color color = new Color())
+    public void InstantiateParticleWithRotation(Vector3 position, ParticleType type, float destroyTime = 5f, Color color = new Color(), bool moveRight = true)
     {
         int intType = (int)type;
         GameObject particle = Instantiate(VFX[intType], position, Quaternion.identity);
@@ -34,7 +34,8 @@ public class EffectHandler : MonoBehaviour
         float angle = Mathf.Atan2(lookPos.y, lookPos.x) * Mathf.Rad2Deg;
 
         particle.transform.rotation = Quaternion.AngleAxis(angle - 45, Vector3.forward);
-        particle.transform.position = particle.transform.position + particle.transform.right;
+        if(moveRight)
+            particle.transform.position += particle.transform.right;
         ParticleSystem ps = particle.GetComponent<ParticleSystem>();
         if (color != null)
         {
@@ -43,7 +44,7 @@ public class EffectHandler : MonoBehaviour
         }
         particle.GetComponent<ParticleSystem>().Play();
 
-        StartCoroutine(destroyParticleTimer(particle, 5));
+        Destroy(particle, destroyTime);
     }
 
     public void InstantiateParticle(Vector3 position, ParticleType type, Transform parent = null, float destroyTime = 1f)
@@ -54,18 +55,12 @@ public class EffectHandler : MonoBehaviour
         particle.transform.position = particle.transform.position;
         particle.GetComponent<ParticleSystem>().Play();
 
-        StartCoroutine(destroyParticleTimer(particle, destroyTime));
+        Destroy(particle, destroyTime);
     }
 
     public void InstantiateCoin(Vector3 position)
     {
         Instantiate(Coin, position, Quaternion.identity);
-    }
-
-    private IEnumerator destroyParticleTimer(GameObject obj, float time)
-    {
-        yield return new WaitForSeconds(time);
-        Destroy(obj);
     }
 }
 

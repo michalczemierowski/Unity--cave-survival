@@ -12,9 +12,10 @@ public class PlayerController : MonoBehaviour
     [Header("Settings")] [Space]
     [SerializeField] [Tooltip("Movement speed multipler")] private float movementSpeedMultipler = 2f;
     [SerializeField] [Tooltip("Number of jumps")] private int maxJumps = 2;
-    [SerializeField] [Tooltip("Bullet velocity multipler")] private float bulletSpeed = 5;
-    [SerializeField] [Tooltip("Bullet damage")] private int bulletDamage = 5;
-    [SerializeField] [Tooltip("Time between shots")] private float timeBetweenShoots = 0.3f;
+    [Space(10)]
+    public Weapon weapon;
+    [SerializeField] private LayerMask shootingRayLayerMask;
+    [Space(10)]
     [SerializeField] [Tooltip("Duration of the stunning effect")] private float stunDuration = 1.3f;
     [SerializeField] [Tooltip("Can a player shoot when he's stunned")] private bool canShootWhileStunned;
     [SerializeField] [Tooltip("Duration of the dash")] private float dashDuration = 2f;
@@ -43,6 +44,7 @@ public class PlayerController : MonoBehaviour
     private EnemySpawner spawner;
     private Rigidbody2D mRigidbody2D;
     private Animator mAnimator;
+    private LineRenderer lineRenderer;
 
     private float movementForce;
     private float gravityScale;
@@ -76,6 +78,7 @@ public class PlayerController : MonoBehaviour
         mRigidbody2D = GetComponent<Rigidbody2D>();
         mAnimator = GetComponent<Animator>();
         controller = GetComponent<CharacterController2D>();
+        lineRenderer = GetComponentInChildren<LineRenderer>();
 
         cam = Camera.main;
         effectHandler = EffectHandler.Instance;
@@ -83,9 +86,9 @@ public class PlayerController : MonoBehaviour
         spawner = EnemySpawner.Instance;
         statsManager = StatsManager.Instance;
 
-        timeLeft = timeBetweenShoots;
+        timeLeft = weapon.timeBetweenShoots;
         gravityScale = mRigidbody2D.gravityScale;
-        mAnimator.SetFloat("shootSpeed", timeBetweenShoots * 5);
+        mAnimator.SetFloat("shootSpeed", weapon.timeBetweenShoots * 5);
 
         Cursor.visible = false;
 
@@ -108,7 +111,7 @@ public class PlayerController : MonoBehaviour
             Destroy(collider.gameObject);
         }
         */
-        if (collision.tag == "EnemyWeapon")
+        if (collision.tag == "Enemy")
         {
             EnemyEventHandler enemy = collision.GetComponentInParent<EnemyEventHandler>();
             if (isInvulnerable)
@@ -154,6 +157,8 @@ public class PlayerController : MonoBehaviour
             mRigidbody2D.velocity = weaponPivot.transform.right * 25;
         else if (isControllable)
             controller.Move(movementForce, false, jump);
+
+        controller.DetectFacing();
         jump = false;
     }
 
@@ -172,11 +177,11 @@ public class PlayerController : MonoBehaviour
         if (!canShoot && !shootingBlockade)
         {
             timeLeft -= Time.deltaTime;
-            reloadProgress.fillAmount = timeLeft / timeBetweenShoots;
+            reloadProgress.fillAmount = timeLeft / weapon.timeBetweenShoots;
             if (timeLeft <= 0)
             {
                 canShoot = true;
-                timeLeft = timeBetweenShoots;
+                timeLeft = weapon.timeBetweenShoots;
                 reloadProgress.fillAmount = 0;
             }
         }
@@ -215,7 +220,7 @@ public class PlayerController : MonoBehaviour
             cmVirtualCamShake.Shake(0.2f, shakeAmplitude: 2.5f);
 
         //STATS
-        statsManager.ReceiveDamage(value);
+        statsManager?.ReceiveDamage(value);
     }
 
     private IEnumerator HealthBarFlash()
@@ -241,15 +246,77 @@ public class PlayerController : MonoBehaviour
     private void Shoot()
     {
         controller.Shoot();
-        GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPos.position, Quaternion.identity);
-        bullet.GetComponent<BulletEventHandler>().damage = bulletDamage;
-        bullet.transform.rotation = weaponPivot.transform.rotation;
-        bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * bulletSpeed, ForceMode2D.Impulse);
+
+        if (weapon.weaponType == WeaponType.PROJECTILE)
+        {
+            ShootProjectile();
+        }
+        else if (weapon.weaponType == WeaponType.RAYCAST)
+        {
+            ShootRay();
+        }
+        else if (weapon.weaponType == WeaponType.EXPLOSIVE)
+        {
+            ShootExplosive();
+        }
+
         effectHandler.PlaySound(transform.position, SoundType.Shoot);
         canShoot = false;
 
         //STATS
-        statsManager.Shoot();
+        statsManager?.Shoot();
+    }
+
+    private void ShootProjectile()
+    {
+        GameObject bullet = Instantiate(weapon.bulletPrefab, bulletSpawnPos.position, Quaternion.identity);
+        bullet.GetComponent<BulletEventHandler>().damage = weapon.damage;
+        bullet.transform.rotation = weaponPivot.transform.rotation;
+        bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * weapon.bulletSpeed, ForceMode2D.Impulse);
+    }
+
+    private void ShootExplosive()
+    {
+        GameObject bullet = Instantiate(weapon.bulletPrefab, bulletSpawnPos.position, Quaternion.identity);
+
+        ExplosiveBullet explosiveBullet = bullet.GetComponent<ExplosiveBullet>();
+        explosiveBullet.damage = weapon.damage;
+        explosiveBullet.radius = weapon.radius;
+
+        bullet.transform.rotation = weaponPivot.transform.rotation;
+        bullet.GetComponent<Rigidbody2D>().AddForce(bullet.transform.right * weapon.bulletSpeed, ForceMode2D.Impulse);
+    }
+
+    private void ShootRay()
+    {
+        Vector3 direction = (cam.ScreenToWorldPoint(Input.mousePosition) - bulletSpawnPos.position).normalized;
+        RaycastHit2D hit = Physics2D.Raycast(bulletSpawnPos.position, direction, Mathf.Infinity, shootingRayLayerMask);
+        if(hit.collider != null)
+        {
+            if (hit.collider.tag == "Enemy")
+            {
+                EnemyEventHandler enemy = hit.collider.GetComponentInParent<EnemyEventHandler>();
+                enemy.Damage(weapon.damage);
+
+                EffectHandler.Instance.PlaySound(hit.point, SoundType.Hurt);
+                EffectHandler.Instance.InstantiateParticleWithRotation(hit.point, ParticleType.EnemyBlood, color: enemy.mainColor, moveRight: false);
+            }
+            else
+            {
+                EffectHandler.Instance.PlaySound(hit.point, SoundType.Hit);
+                EffectHandler.Instance.InstantiateParticleWithRotation(hit.point, ParticleType.WallPlayer, moveRight: false);
+            }
+
+            StartCoroutine(DrawLine(hit.point));
+        }
+    }
+
+    private IEnumerator DrawLine(Vector2 position)
+    {
+        lineRenderer.SetPositions(new Vector3[] { bulletSpawnPos.position, position });
+        yield return null;
+        yield return null;
+        lineRenderer.SetPositions(new Vector3[] { Vector3.zero, Vector3.zero });
     }
 
     private void Dash()
@@ -261,7 +328,7 @@ public class PlayerController : MonoBehaviour
             mRigidbody2D.AddForce(weaponPivot.transform.right * 20, ForceMode2D.Impulse);
 
             //STATS
-            statsManager.Dash();
+            statsManager?.Dash();
         }
     }
 
@@ -294,14 +361,14 @@ public class PlayerController : MonoBehaviour
         Cursor.visible = true;
 
         //STATS
-        statsManager.Death();
+        statsManager?.Death();
         PrintStats();
     }
 
     private void PrintStats()
     {
         // TODO: SHOW STATS
-        Stats stats = statsManager.GetStats();
+        Stats stats = statsManager?.GetStats();
         print(stats.causedDamage + " CAUSED DAMAGE");
         print(stats.receivedDamage + " RECEIVED DAMAGE");
         print(stats.shotsFired + " SHOTS FIRED");
@@ -325,7 +392,7 @@ public class PlayerController : MonoBehaviour
         }
 
         //STATS
-        statsManager.LvlUP();
+        statsManager?.LvlUP();
     }
 
     private IEnumerator IEDash(float time)

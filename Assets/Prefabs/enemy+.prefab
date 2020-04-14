@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5070783491321030605}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: weaponPivot
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 836856805255137378}
   m_Layer: 2
   m_Name: weapon
-  m_TagString: EnemyWeapon
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -151,9 +151,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1460428445244560458}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: shootPos
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -182,9 +182,10 @@ GameObject:
   m_Component:
   - component: {fileID: 91454606965049538}
   - component: {fileID: 1529452132445835425}
-  m_Layer: 0
+  - component: {fileID: 5483629033385858639}
+  m_Layer: 9
   m_Name: enemySprite
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -254,6 +255,37 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!60 &5483629033385858639
+PolygonCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5134935762902811566}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 6200000, guid: 5beb6e793536b5c45a4384b6b1080580, type: 2}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: 0, y: 0.5}
+      - {x: -0.43301272, y: 0.24999999}
+      - {x: -0.4330127, y: -0.25000003}
+      - {x: 0.00000004371139, y: -0.5}
+      - {x: 0.43301272, y: -0.24999996}
+      - {x: 0.43301272, y: 0.24999996}
 --- !u!1 &6386537347664492237
 GameObject:
   m_ObjectHideFlags: 0
@@ -264,9 +296,9 @@ GameObject:
   m_Component:
   - component: {fileID: 9097909698129223518}
   - component: {fileID: 8871090641419212120}
-  m_Layer: 2
+  m_Layer: 9
   m_Name: hpBar
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -347,8 +379,7 @@ GameObject:
   - component: {fileID: 7725981501320480048}
   - component: {fileID: 7725981501320480052}
   - component: {fileID: 303514669728005814}
-  - component: {fileID: 9198114314249448196}
-  m_Layer: 2
+  m_Layer: 9
   m_Name: enemy+
   m_TagString: Enemy
   m_Icon: {fileID: 0}
@@ -467,29 +498,3 @@ Animator:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorControllerStateOnDisable: 0
---- !u!61 &9198114314249448196
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7725981501320480043}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 6200000, guid: 5beb6e793536b5c45a4384b6b1080580, type: 2}
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0.005113125, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0, y: 0}
-    oldSize: {x: 0, y: 0}
-    newSize: {x: 0, y: 0}
-    adaptiveTilingThreshold: 0
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  serializedVersion: 2
-  m_Size: {x: 0.87728786, y: 1}
-  m_EdgeRadius: 0
